@@ -1,0 +1,38 @@
+version: '3.1'
+services:
+  rancher:
+    privileged: true
+    restart: always
+    image: rancher/rancher:v2.6-head
+    container_name: rancher
+    ports:
+     #   - 8081:80
+      - 8443:443
+    environment:
+      TZ: America/Mexico_City
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rancher.entrypoints=http"
+      - "traefik.http.routers.rancher.rule=Host(`${DOMAIN_NAME}` ) "
+      - "traefik.http.middlewares.rancher-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.rancher.middlewares=rancher-https-redirect"
+      - "traefik.http.routers.rancher-secure.entrypoints=https"
+      - "traefik.http.routers.rancher-secure.rule=Host(`${DOMAIN_NAME}` )   "
+      - "traefik.http.routers.rancher-secure.tls=true"
+      - "traefik.http.routers.rancher-secure.tls.certresolver=http"
+      - "traefik.http.routers.rancher-secure.service=rancher"
+      - "traefik.http.services.rancher.loadbalancer.server.port=443"
+      - "traefik.http.services.rancher.loadbalancer.server.scheme=https"
+      - "traefik.docker.network=proxy"
+ 
+    volumes:
+      - ./data:/var/lib/rancher/
+      - ./auditlog:/var/log/auditlog
+    networks:
+      - proxy
+      - default
+networks:
+  default:
+  proxy:
+    external: true
+
